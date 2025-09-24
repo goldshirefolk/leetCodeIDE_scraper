@@ -22,7 +22,7 @@ std::string makeGraphQLRequest(const std::string &query, const std::string &vari
     // Prepare the GraphQL request
     std::string postData = "{\"query\":\"" + query + "\",\"variables\":" + variables + "}";
 
-    // Escape the query (simplified)
+    // Escape query
     std::string escapedQuery;
     for (char c : query) {
         if (c == '\n')
@@ -90,7 +90,7 @@ std::string getProblemList(int skip = 0, int limit = 50) {
     return makeGraphQLRequest(query, variables);
 }
 
-// Get specific problem details by title slug (like "two-sum")
+// Get specific problem details by title
 std::string getProblemDetail(const std::string &titleSlug) {
     std::string query = R"(
         query questionData($titleSlug: String!) {
@@ -117,11 +117,34 @@ std::string getProblemDetail(const std::string &titleSlug) {
 }
 
 typedef enum {
-    LANG_CPP,
-};
+    LANG_CPP
+} languages;
+
+bool problem_has_images = false;
+const std::string image_warning = "!!! Problem has images, it is best you use the link !!!";
+
+std::string problem_id;
+std::string problem_title;
+std::string problem_difficulty;
 
 const std::string newLine_token = "\\n";
-const std::vector<std::string> genericTokens = {"\\u200b", "\\t"};
+
+const std::vector<std::string> genericDescTokens = {"\\u200b", "\\t"};
+const std::vector<std::string> descSectionTokens = {"Example", "Constraints"};
+
+const std::string exampleSymbol_start = "(";
+const std::string exampleSymbol_end = ")";
+
+const std::string constraintsLineSymbol_start = "(*) ";
+
+const std::vector<std::string> descSectionSymbols_start = {"/*"};
+const std::vector<std::string> descSectionSymbols_end = {"*/"};
+const std::vector<char> descSectionSymbols = {'=', '#', '-'};
+const std::vector<int> maxSectioNewLines = {2, 2, 1};
+
+const int sectionMax = 1;
+int descSectionSymbolLength = 32;
+const int descLineMaxLength = 96;
 
 class stringExtractor {
 private:
@@ -147,29 +170,58 @@ private:
     static void detokenize(std::string &buffer) {
 
         /// Remove all the possible tokens we encounter
-        for (int i = 0; i < genericTokens.size(); i++) {
+        for (int i = 0; i < genericDescTokens.size(); i++) {
             int token_pos_start = 0;
             int token_pos_end = 0;
 
-            int token_length = (genericTokens[i]).length();
+            int token_length = (genericDescTokens[i]).length();
 
-            while ((token_pos_end = buffer.find(genericTokens[i], token_pos_start)) != std::string::npos) {
+            while ((token_pos_end = buffer.find(genericDescTokens[i], token_pos_start)) != std::string::npos) {
                 buffer.erase(token_pos_end, token_length);
                 token_pos_start = token_pos_end - token_length;
             }
         }
     }
 
-    static void processNewLine(const std::string &description, int *start, int end, int *pos, std::ostream &outStream) {
-        *pos = end;
-        while (*pos < description.length() &&
-               description[*pos] == newLine_token[0] && description[*pos + 1] == newLine_token[1]) {
-            outStream << '\n';
+    static void processSection(std::string &buffer, int *section, std::ostream &outStream, int lang) {
 
-            (*pos) += 2;
+        // if (*section > sectionMax)
+        //     return;
+
+        if (*section <= sectionMax) {
+            std::string token = descSectionTokens[*section];
+
+            if (buffer.find(token) != std::string::npos) {
+                std::string sectionSymbolBuffer;
+                sectionSymbolBuffer.append(descSectionSymbolLength, descSectionSymbols[2]);
+
+                outStream << sectionSymbolBuffer << '\n';
+                (*section)++;
+            }
         }
 
-        *start = *pos;
+        /// Examples Section
+        if (*section == 1) {
+            if (buffer.find(descSectionTokens[0]) != std::string::npos) {
+                buffer.insert(0, exampleSymbol_start);
+                buffer.insert(buffer.length() - 1, exampleSymbol_end);
+            }
+        }
+    }
+
+    static void processNewLine(const std::string &description, int *start, int end, std::ostream &outStream,
+                               const int maxNewLines) {
+        int pos = end;
+        int current = 0;
+        while (pos < description.length() && description[pos] == newLine_token[0] && description[pos + 1] == newLine_token[1]) {
+            if (current < maxNewLines)
+                outStream << '\n';
+
+            (pos) += 2;
+            current++;
+        }
+
+        *start = pos;
     }
 
 public:
@@ -187,58 +239,118 @@ public:
         return json_extracted;
     }
 
-    static void exportDescription(std::string &description, std::ostream &outStream) {
+    typedef enum {
+        SECTION_START = 2,
+        SECTION_EXAMPLES = 1,
+        SECTION_CONSTRAINTS = 1
+    } sectionMaxNewLines;
+
+    static void exportProblemHeader(std::ostream &outStream, int lang) {
+        outStream << descSectionSymbols_start[lang] << "\n";
+
+        std::string startBuffer;
+
+        startBuffer += problem_id + ". " + problem_title + " [" + problem_difficulty + "]";
+        startBuffer = std::regex_replace(startBuffer, std::regex("\""), "");
+
+        outStream << startBuffer << '\n';
+
+        /// Show link
+        startBuffer.clear();
+
+        startBuffer = "https://leetcode.com/problems/";
+        startBuffer += problem_title;
+        startBuffer = std::regex_replace(startBuffer, std::regex(" "), "-");
+        startBuffer = std::regex_replace(startBuffer, std::regex("\""), "");
+        std::transform(startBuffer.begin(), startBuffer.end(), startBuffer.begin(), ::tolower);
+        startBuffer += '/';
+        outStream << startBuffer << '\n';
+
+        if (problem_has_images) {
+            outStream << '\n';
+            outStream << image_warning;
+            outStream << '\n';
+        }
+
+        outStream << descSectionSymbols_end[lang] << "\n\n\n";
+    }
+
+    static void exportDescription(std::string &description, std::ostream &outStream, int lang) {
         int start = 0;
         int end = 0;
-        std::string newLine_token = "\\n";
+
+        bool firstBuffer = true;
+
+        int section = 0;
+
+        outStream << descSectionSymbols_start[lang] << "\n";
 
         while ((end = description.find(newLine_token, start)) != std::string::npos) {
             std::string buffer = description.substr(start, end - start);
-            // int token_pos_start = 0;
-            // int token_pos_end = 0;
-
-            // // remove all the possible tokens we encounter
-            // for (int i = 0; i < genericTokens.size(); i++) {
-            //     int token_length = (genericTokens[i]).length();
-
-            //     while ((token_pos_end = buffer.find(genericTokens[i], token_pos_start)) != std::string::npos) {
-            //         buffer.erase(token_pos_end, token_length);
-            //         token_pos_start = token_pos_end - token_length;
-            //     }
-            // }
 
             detokenize(buffer);
 
+            if (firstBuffer) {
+                buffer.erase(0, 1);
+                firstBuffer = false;
+            }
+
+            if (section == 0) {
+                int bufferLength = buffer.length();
+
+                while (bufferLength > descLineMaxLength) {
+                    int erasePos = descLineMaxLength;
+                    while (buffer[--erasePos] != ' ')
+                        ;
+
+                    outStream << buffer.substr(0, erasePos) << '\n';
+                    buffer.erase(0, erasePos);
+                    if (buffer[0] == ' ')
+                        buffer.erase(0, 1);
+
+                    bufferLength -= erasePos;
+
+                    descSectionSymbolLength = erasePos;
+                }
+
+                if (bufferLength > descSectionSymbolLength) {
+                    descSectionSymbolLength = bufferLength;
+                }
+            } else if (section == 1) {
+                buffer = std::regex_replace(buffer, std::regex("\\\\"), "");
+            } else if (section == 2) {  // constraints
+                buffer.insert(0, constraintsLineSymbol_start);
+            }
+
+            processSection(buffer, &section, outStream, lang);
+
             outStream << buffer;
-
-            // process newline
-            // bool printed_newLine = 0;
-            // int pos = end;
-            // while (pos < description.length() &&
-            //        description[pos] == newLine_token[0] && description[pos + 1] == newLine_token[1]) {
-            //     outStream << '\n';
-            //     printed_newLine = 1;
-
-            //     pos += 2;
-            // }
 
             int pos = 0;
 
-            processNewLine(description, &start, end, &pos, outStream);
+            processNewLine(description, &start, end, outStream, maxSectioNewLines[section]);
 
-            // start = pos;
+            buffer.clear();
         }
+
+        outStream << descSectionSymbols_end[lang] << '\n';
     }
 };
 
 std::string cleanHTML(const std::string &html) {
     std::string result = html;
 
-    // Remove HTML tags
+    if (result.find("<img") != std::string::npos) {
+        problem_has_images = true;
+    }
+
+    result = std::regex_replace(result, std::regex("<sup>"), " to the power of : ");
+
+    /// Remove HTML tags
     std::regex tagRegex("<[^>]*>");
     result = std::regex_replace(result, tagRegex, "");
 
-    // Decode HTML entities
+    /// Decode HTML entities
     result = std::regex_replace(result, std::regex("&amp;"), "&");
     result = std::regex_replace(result, std::regex("&lt;"), "<");
     result = std::regex_replace(result, std::regex("&gt;"), ">");
@@ -288,16 +400,16 @@ int main() {
     std::cout << "\n\n\n\n\n";
     std::cout << "=========EXTRACTED CONTENT=========" << "\n\n";
 
-    std::string id = stringExtractor::extractFromJson(problemDetail, "\"questionId\":");
-    std::cout << "Problem Id : " << id << std::endl;
+    problem_id = stringExtractor::extractFromJson(problemDetail, "\"questionId\":");
+    std::cout << "Problem Id : " << problem_id << std::endl;
 
-    std::string title = stringExtractor::extractFromJson(problemDetail, "\"title\":");
-    std::cout << "Problem title : " << title << std::endl;
+    problem_title = stringExtractor::extractFromJson(problemDetail, "\"title\":");
+    std::cout << "Problem title : " << problem_title << std::endl;
 
     std::string content = stringExtractor::extractFromJson(problemDetail, "\"content\":");
 
-    std::string difficulty = stringExtractor::extractFromJson(problemDetail, "\"difficulty\":");
-    std::cout << "Problem difficulty : " << difficulty << std::endl;
+    problem_difficulty = stringExtractor::extractFromJson(problemDetail, "\"difficulty\":");
+    std::cout << "Problem difficulty : " << problem_difficulty << std::endl;
 
     std::cout << "\n\n";
     std::cout << "=========PROBLEM DESCRIPTION=========" << "\n";
@@ -308,7 +420,8 @@ int main() {
     cleansedHtml_out << clean_html_description;
     // std::cout << cleanHTML(content) << "\n\n";
 
-    stringExtractor::exportDescription(clean_html_description, std::cout);
+    stringExtractor::exportProblemHeader(std::cout, LANG_CPP);
+    stringExtractor::exportDescription(clean_html_description, std::cout, LANG_CPP);
 
     // // Save raw response
     // std::ofstream detailFile("two_sum_detail.json");
