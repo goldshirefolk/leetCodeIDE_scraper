@@ -1,1 +1,1 @@
-sudo apt-get install libjsoncpp-dev;sudo apt-get install libcurl4-openssl-dev;./compile.sh;chmod +rwx leetcide_api
+sudo apt-get install libjsoncpp-dev;sudo apt-get install libcurl4-openssl-dev;./compile.sh;chmod +rwx leetcode_api
