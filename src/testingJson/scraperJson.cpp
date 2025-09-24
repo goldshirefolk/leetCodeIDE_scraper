@@ -1,3 +1,4 @@
+#include "config.h"
 #include <curl/curl.h>
 #include <fstream>
 #include <iostream>
@@ -5,6 +6,8 @@
 #include <regex>
 #include <string>
 #include <vector>
+
+using namespace LeetcodeToolConfig;
 
 size_t WriteCallback(void *contents, size_t size, size_t nmemb, std::string *response) {
     size_t totalSize = size * nmemb;
@@ -54,29 +57,7 @@ std::string makeGraphQLRequest(const std::string &query, const std::string &vari
 
 // Get problem list (50 problems at a time)
 std::string getProblemList(int skip = 0, int limit = 50) {
-    std::string query = R"(
-        query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
-            problemsetQuestionList: questionList(
-                categorySlug: $categorySlug
-                limit: $limit
-                skip: $skip
-                filters: $filters
-            ) {
-                total: totalNum
-                questions: data {
-                    acRate
-                    difficulty
-                    frontendQuestionId: questionFrontendId
-                    paidOnly: isPaidOnly
-                    title
-                    titleSlug
-                    topicTags {
-                        name
-                    }
-                }
-            }
-        }
-    )";
+    std::string query = getProblemsListQuery;
 
     std::string variables = R"({
         "categorySlug": "",
@@ -92,24 +73,7 @@ std::string getProblemList(int skip = 0, int limit = 50) {
 
 // Get specific problem details by title
 std::string getProblemDetail(const std::string &titleSlug) {
-    std::string query = R"(
-        query questionData($titleSlug: String!) {
-            question(titleSlug: $titleSlug) {
-                questionId
-                questionFrontendId
-                title
-                titleSlug
-                content
-                difficulty
-                exampleTestcases
-                codeSnippets {
-                    lang
-                    langSlug
-                    code
-                }
-            }
-        }
-    )";
+    std::string query = getProblemDetailsquery;
 
     std::string variables = R"({"titleSlug": ")" + titleSlug + "\"}";
 
@@ -121,30 +85,12 @@ typedef enum {
 } languages;
 
 bool problem_has_images = false;
-const std::string image_warning = "!!! Problem has images, it is best you use the link !!!";
 
 std::string problem_id;
 std::string problem_title;
 std::string problem_difficulty;
 
-const std::string newLine_token = "\\n";
-
-const std::vector<std::string> genericDescTokens = {"\\u200b", "\\t"};
-const std::vector<std::string> descSectionTokens = {"Example", "Constraints"};
-
-const std::string exampleSymbol_start = "(";
-const std::string exampleSymbol_end = ")";
-
-const std::string constraintsLineSymbol_start = "(*) ";
-
-const std::vector<std::string> descSectionSymbols_start = {"/*"};
-const std::vector<std::string> descSectionSymbols_end = {"*/"};
-const std::vector<char> descSectionSymbols = {'=', '#', '-'};
-const std::vector<int> maxSectioNewLines = {2, 2, 1};
-
-const int sectionMax = 1;
 int descSectionSymbolLength = 32;
-const int descLineMaxLength = 96;
 
 class stringExtractor {
 private:
@@ -168,7 +114,6 @@ private:
     }
 
     static void detokenize(std::string &buffer) {
-
         /// Remove all the possible tokens we encounter
         for (int i = 0; i < genericDescTokens.size(); i++) {
             int token_pos_start = 0;
@@ -184,11 +129,7 @@ private:
     }
 
     static void processSection(std::string &buffer, int *section, std::ostream &outStream, int lang) {
-
-        // if (*section > sectionMax)
-        //     return;
-
-        if (*section <= sectionMax) {
+        if (*section <= descSectionMax) {
             std::string token = descSectionTokens[*section];
 
             if (buffer.find(token) != std::string::npos) {
@@ -243,7 +184,7 @@ public:
         SECTION_START = 2,
         SECTION_EXAMPLES = 1,
         SECTION_CONSTRAINTS = 1
-    } sectionMaxNewLines;
+    } descSectionMaxNewLines;
 
     static void exportProblemHeader(std::ostream &outStream, int lang) {
         outStream << descSectionSymbols_start[lang] << "\n";
@@ -258,7 +199,7 @@ public:
         /// Show link
         startBuffer.clear();
 
-        startBuffer = "https://leetcode.com/problems/";
+        startBuffer = generatedLinkStart;
         startBuffer += problem_title;
         startBuffer = std::regex_replace(startBuffer, std::regex(" "), "-");
         startBuffer = std::regex_replace(startBuffer, std::regex("\""), "");
@@ -267,9 +208,7 @@ public:
         outStream << startBuffer << '\n';
 
         if (problem_has_images) {
-            outStream << '\n';
             outStream << image_warning;
-            outStream << '\n';
         }
 
         outStream << descSectionSymbols_end[lang] << "\n\n\n";
@@ -326,8 +265,6 @@ public:
 
             outStream << buffer;
 
-            int pos = 0;
-
             processNewLine(description, &start, end, outStream, maxSectioNewLines[section]);
 
             buffer.clear();
@@ -357,9 +294,6 @@ std::string cleanHTML(const std::string &html) {
     result = std::regex_replace(result, std::regex("&quot;"), "\"");
     result = std::regex_replace(result, std::regex("&#39;"), "'");
     result = std::regex_replace(result, std::regex("&nbsp;"), " ");
-
-    // Remove extra whitespace
-    // result = std::regex_replace(result, std::regex("\\s+"), " ");
 
     return result;
 }
