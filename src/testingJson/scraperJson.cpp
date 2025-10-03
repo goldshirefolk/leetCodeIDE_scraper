@@ -10,9 +10,9 @@
 using namespace LeetcodeToolConfig;
 
 size_t WriteCallback(void *contents, size_t size, size_t nmemb, std::string *response) {
-    size_t totalSize = size * nmemb;
-    response->append((char *)contents, totalSize);
-    return totalSize;
+    size_t total_size = size * nmemb;
+    response->append((char *)contents, total_size);
+    return total_size;
 }
 
 std::string makeGraphQLRequest(const std::string &query, const std::string &variables = "{}") {
@@ -23,27 +23,27 @@ std::string makeGraphQLRequest(const std::string &query, const std::string &vari
         return "";
 
     // Prepare the GraphQL request
-    std::string postData = "{\"query\":\"" + query + "\",\"variables\":" + variables + "}";
+    std::string post_data = "{\"query\":\"" + query + "\",\"variables\":" + variables + "}";
 
     // Escape query
-    std::string escapedQuery;
+    std::string escaped_query;
     for (char c : query) {
         if (c == '\n')
-            escapedQuery += "\\n";
+            escaped_query += "\\n";
         else if (c == '\"')
-            escapedQuery += "\\\"";
+            escaped_query += "\\\"";
         else
-            escapedQuery += c;
+            escaped_query += c;
     }
 
-    postData = "{\"query\":\"" + escapedQuery + "\",\"variables\":" + variables + "}";
+    post_data = "{\"query\":\"" + escaped_query + "\",\"variables\":" + variables + "}";
 
     struct curl_slist *headers = nullptr;
     headers = curl_slist_append(headers, "Content-Type: application/json");
     headers = curl_slist_append(headers, "User-Agent: Mozilla/5.0");
 
     curl_easy_setopt(curl, CURLOPT_URL, "https://leetcode.com/graphql");
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data.c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
@@ -80,17 +80,13 @@ std::string getProblemDetail(const std::string &titleSlug) {
     return makeGraphQLRequest(query, variables);
 }
 
-typedef enum {
-    LANG_CPP
-} languages;
-
 bool problem_has_images = false;
 
 std::string problem_id;
 std::string problem_title;
 std::string problem_difficulty;
 
-int descSectionSymbolLength = 32;
+int desc_section_symbol_length = 32;
 
 class stringExtractor {
 private:
@@ -134,7 +130,7 @@ private:
 
             if (buffer.find(token) != std::string::npos) {
                 std::string sectionSymbolBuffer;
-                sectionSymbolBuffer.append(descSectionSymbolLength, descSectionSymbols[2]);
+                sectionSymbolBuffer.append(desc_section_symbol_length, descSectionSymbols[2]);
 
                 outStream << sectionSymbolBuffer << '\n';
                 (*section)++;
@@ -189,23 +185,23 @@ public:
     static void exportProblemHeader(std::ostream &outStream, int lang) {
         outStream << descSectionSymbols_start[lang] << "\n";
 
-        std::string startBuffer;
+        std::string start_buffer;
 
-        startBuffer += problem_id + ". " + problem_title + " [" + problem_difficulty + "]";
-        startBuffer = std::regex_replace(startBuffer, std::regex("\""), "");
+        start_buffer += problem_id + ". " + problem_title + " [" + problem_difficulty + "]";
+        start_buffer = std::regex_replace(start_buffer, std::regex("\""), "");
 
-        outStream << startBuffer << '\n';
+        outStream << start_buffer << '\n';
 
         /// Show link
-        startBuffer.clear();
+        start_buffer.clear();
 
-        startBuffer = generatedLinkStart;
-        startBuffer += problem_title;
-        startBuffer = std::regex_replace(startBuffer, std::regex(" "), "-");
-        startBuffer = std::regex_replace(startBuffer, std::regex("\""), "");
-        std::transform(startBuffer.begin(), startBuffer.end(), startBuffer.begin(), ::tolower);
-        startBuffer += '/';
-        outStream << startBuffer << '\n';
+        start_buffer = generatedLinkStart;
+        start_buffer += problem_title;
+        start_buffer = std::regex_replace(start_buffer, std::regex(" "), "-");
+        start_buffer = std::regex_replace(start_buffer, std::regex("\""), "");
+        std::transform(start_buffer.begin(), start_buffer.end(), start_buffer.begin(), ::tolower);
+        start_buffer += '/';
+        outStream << start_buffer << '\n';
 
         if (problem_has_images) {
             outStream << image_warning;
@@ -218,7 +214,7 @@ public:
         int start = 0;
         int end = 0;
 
-        bool firstBuffer = true;
+        bool first_buffer = true;
 
         int section = 0;
 
@@ -229,15 +225,15 @@ public:
 
             detokenize(buffer);
 
-            if (firstBuffer) {
+            if (first_buffer) {
                 buffer.erase(0, 1);
-                firstBuffer = false;
+                first_buffer = false;
             }
 
             if (section == 0) {
-                int bufferLength = buffer.length();
+                int buffer_length = buffer.length();
 
-                while (bufferLength > descLineMaxLength) {
+                while (buffer_length > descLineMaxLength) {
                     int erasePos = descLineMaxLength;
                     while (buffer[--erasePos] != ' ')
                         ;
@@ -247,13 +243,13 @@ public:
                     if (buffer[0] == ' ')
                         buffer.erase(0, 1);
 
-                    bufferLength -= erasePos;
+                    buffer_length -= erasePos;
 
-                    descSectionSymbolLength = erasePos;
+                    desc_section_symbol_length = erasePos;
                 }
 
-                if (bufferLength > descSectionSymbolLength) {
-                    descSectionSymbolLength = bufferLength;
+                if (buffer_length > desc_section_symbol_length) {
+                    desc_section_symbol_length = buffer_length;
                 }
             } else if (section == 1) {
                 buffer = std::regex_replace(buffer, std::regex("\\\\"), "");
@@ -265,7 +261,7 @@ public:
 
             outStream << buffer;
 
-            processNewLine(description, &start, end, outStream, maxSectioNewLines[section]);
+            processNewLine(description, &start, end, outStream, maxSectionNewLines[section]);
 
             buffer.clear();
         }
@@ -298,14 +294,27 @@ std::string cleanHTML(const std::string &html) {
     return result;
 }
 
+languages getLanguageChar(std::istream &input_stream) {
+    std::string lang;
+    input_stream >> lang;
+
+    for (char i = 0; i < LANGUAGE_COUNT; i++) {
+        if (lang == language_tokens[i]) {
+            return (languages)i;
+        }
+    }
+
+    return LANG_INVALID;
+}
+
 int main() {
     std::cout << "=== Testing LeetCode GraphQL API ===\n"
               << std::endl;
 
-    std::ifstream linkInput("link");
+    std::ifstream link_input("link");
 
     std::string link;
-    linkInput >> link;
+    link_input >> link;
 
     std::string problem_name = stringExtractor::nameFromLink(link);
     std::cout << problem_name << std::endl;
@@ -323,26 +332,31 @@ int main() {
     // std::cout << "Problem list saved to problem_list.json\n"
     //           << std::endl;
 
+    languages chosen_language = getLanguageChar(link_input);
+    std::cout << "\n\n\nChosen lang : " << language_tokens[chosen_language] << "\n\n\n";
+
     std::cout << "Fetching problem details..." << std::endl;
-    std::string problemDetail = getProblemDetail(problem_name);
-    std::cout << "Problem detail response size: " << problemDetail.size() << " bytes\n"
+
+    std::string problem_detail = getProblemDetail(problem_name);
+    std::string problemDetail_copy = problem_detail;
+    std::cout << "Problem detail response size: " << problem_detail.size() << " bytes\n"
               << std::endl;
 
     std::ofstream rawDesc_out("rawDesc");
-    rawDesc_out << problemDetail;
+    rawDesc_out << problem_detail;
 
     std::cout << "\n\n\n\n\n";
     std::cout << "=========EXTRACTED CONTENT=========" << "\n\n";
 
-    problem_id = stringExtractor::extractFromJson(problemDetail, "\"questionId\":");
+    problem_id = stringExtractor::extractFromJson(problem_detail, "\"questionId\":");
     std::cout << "Problem Id : " << problem_id << std::endl;
 
-    problem_title = stringExtractor::extractFromJson(problemDetail, "\"title\":");
+    problem_title = stringExtractor::extractFromJson(problem_detail, "\"title\":");
     std::cout << "Problem title : " << problem_title << std::endl;
 
-    std::string content = stringExtractor::extractFromJson(problemDetail, "\"content\":");
+    std::string content = stringExtractor::extractFromJson(problem_detail, "\"content\":");
 
-    problem_difficulty = stringExtractor::extractFromJson(problemDetail, "\"difficulty\":");
+    problem_difficulty = stringExtractor::extractFromJson(problem_detail, "\"difficulty\":");
     std::cout << "Problem difficulty : " << problem_difficulty << std::endl;
 
     std::cout << "\n\n";
@@ -357,9 +371,24 @@ int main() {
     stringExtractor::exportProblemHeader(std::cout, LANG_CPP);
     stringExtractor::exportDescription(clean_html_description, std::cout, LANG_CPP);
 
+    /// Get code
+
+    // std::cout << problemDetail_copy;
+
+    std::string codeToken = "\"langSlug\":";
+    codeToken.append("\"");
+    codeToken.append(language_tokens[chosen_language]);
+    codeToken.append("\"");
+
+    std::cout << "TOKEN : " << codeToken;
+
+    std::string problem_code = stringExtractor::extractFromJson(problemDetail_copy, codeToken);
+    std::cout << "\n\n"
+              << problemDetail_copy << "\n\n";
+
     // // Save raw response
     // std::ofstream detailFile("two_sum_detail.json");
-    // detailFile << problemDetail;
+    // detailFile << problem_detail;
     // detailFile.close();
     // std::cout << "Problem detail saved to two_sum_detail.json\n"
     //           << std::endl;
@@ -371,7 +400,7 @@ int main() {
 
     // std::cout
     //     << "=== Problem Detail Preview ===" << std::endl;
-    // std::cout << problemDetail << "..." << std::endl;
+    // std::cout << problem_detail << "..." << std::endl;
 
     return 0;
 }
