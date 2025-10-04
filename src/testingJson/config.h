@@ -21,7 +21,7 @@ inline const std::string constraintsLineSymbol_start = "(*) ";
 inline const std::vector<std::string> descSectionSymbols_start = {"/*"};
 inline const std::vector<std::string> descSectionSymbols_end = {"*/"};
 inline const std::vector<char> descSectionSymbols = {'=', '#', '-'};
-inline const std::vector<int> maxSectioNewLines = {2, 2, 1};
+inline const std::vector<int> maxSectionNewLines = {2, 2, 1};
 
 inline const int descLineMaxLength = 96;
 inline const int descSectionMax = 1;
@@ -96,7 +96,7 @@ typedef enum {
     LANG_INVALID
 } languages;
 
-inline const std::vector<std::string> language_tokens = {
+inline const std::vector<std::string> languageTokens = {
     "cpp",         //  cpp
     "c",           //  c
     "csharp",      //  csharp
@@ -117,5 +117,9 @@ inline const std::vector<std::string> language_tokens = {
     "rust",        //  rust
     "\n\nINVALID!!\n\n",
 };
+
+inline const std::vector<std::vector<languages>> languageStructureSimiliarities = {
+    {LANG_JAVA, LANG_C, LANG_CPP, LANG_TYPESCRIPT, LANG_CSHARP, LANG_GO, LANG_KOTLIN, LANG_SWIFT, LANG_RUST, LANG_DART, LANG_SCALA},
+    {}};
 
 }  // namespace LeetcodeToolConfig

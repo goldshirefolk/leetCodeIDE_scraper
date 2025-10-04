@@ -268,6 +268,36 @@ public:
 
         outStream << descSectionSymbols_end[lang] << '\n';
     }
+
+    static void prepareCodeSnippet(std::string &description) {
+        int start = description.find("code:", 0);
+        int skipLength = sizeof("codep:p") + 2;
+        description = description.substr(start + skipLength, description.size() - skipLength);
+
+        int code_snippet_end = description.find("\"},{\"lang\"");
+        description = description.substr(0, code_snippet_end);
+    }
+
+    static void exportCodeSnippet_cType(std::string &description, std::ostream &outStream) {
+        prepareCodeSnippet(description);
+
+        outStream << description << "\n\n";
+
+        for (int i = 0; i < description.size(); i++) {
+            if (i < description.size() - 1) {
+                if (description[i] == '\\' && description[i + 1] == 'n') {
+                    outStream << '\n';
+                    i += 2;
+                    if (i > description.size()) {
+                        break;
+                    }
+                }
+                outStream << description[i];
+            }
+        }
+
+        outStream << "\n\n";
+    }
 };
 
 std::string cleanHTML(const std::string &html) {
@@ -294,17 +324,32 @@ std::string cleanHTML(const std::string &html) {
     return result;
 }
 
+#define LANG_STRUCTURE_TYPE_C 0
+
 languages getLanguageChar(std::istream &input_stream) {
     std::string lang;
     input_stream >> lang;
 
     for (char i = 0; i < LANGUAGE_COUNT; i++) {
-        if (lang == language_tokens[i]) {
+        if (lang == languageTokens[i]) {
             return (languages)i;
         }
     }
 
     return LANG_INVALID;
+}
+
+char getLanguageStructureType(languages chosen_lang) {
+    for (char i = 0; i < languageStructureSimiliarities.size(); i++) {
+        auto v = std::find(languageStructureSimiliarities[i].begin(), languageStructureSimiliarities[i].end(), chosen_lang);
+        if (v != languageStructureSimiliarities[i].end()) {
+            return i;
+        }
+    }
+
+    std::cout << "\n\nCould not find correct language structure!!\n\n";
+    exit(1);
+    return -1;
 }
 
 int main() {
@@ -333,7 +378,7 @@ int main() {
     //           << std::endl;
 
     languages chosen_language = getLanguageChar(link_input);
-    std::cout << "\n\n\nChosen lang : " << language_tokens[chosen_language] << "\n\n\n";
+    std::cout << "\n\n\nChosen lang : " << languageTokens[chosen_language] << "\n\n\n";
 
     std::cout << "Fetching problem details..." << std::endl;
 
@@ -377,14 +422,19 @@ int main() {
 
     std::string codeToken = "\"langSlug\":";
     codeToken.append("\"");
-    codeToken.append(language_tokens[chosen_language]);
+    codeToken.append(languageTokens[chosen_language]);
     codeToken.append("\"");
 
     std::cout << "TOKEN : " << codeToken;
 
     std::string problem_code = stringExtractor::extractFromJson(problemDetail_copy, codeToken);
-    std::cout << "\n\n"
-              << problemDetail_copy << "\n\n";
+    // std::cout << "\n\n"
+    //           << problemDetail_copy << "\n\n";
+
+    char language_structure_type = getLanguageStructureType(chosen_language);
+    std::cout << "\n\nTYPE : " << (int)language_structure_type << "\n\n";
+
+    stringExtractor::exportCodeSnippet_cType(problemDetail_copy, std::cout);
 
     // // Save raw response
     // std::ofstream detailFile("two_sum_detail.json");
