@@ -1,3 +1,5 @@
+////// TO DO : FIX WEIRD BUG WITH CPP NOT ADDING THE LAST ';' IN THE CODE SNIPPET
+
 #include "config.h"
 #include <curl/curl.h>
 #include <fstream>
@@ -292,8 +294,8 @@ public:
                         break;
                     }
                 }
-                outStream << description[i];
             }
+            outStream << description[i];
         }
 
         outStream << "\n\n";
@@ -434,7 +436,9 @@ int main() {
     char language_structure_type = getLanguageStructureType(chosen_language);
     std::cout << "\n\nTYPE : " << (int)language_structure_type << "\n\n";
 
+    std::cout << "\n\n\n";
     stringExtractor::exportCodeSnippet_cType(problemDetail_copy, std::cout);
+    std::cout << "\n\n\n";
 
     // // Save raw response
     // std::ofstream detailFile("two_sum_detail.json");

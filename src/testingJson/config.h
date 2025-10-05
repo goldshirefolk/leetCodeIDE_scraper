@@ -105,7 +105,7 @@ inline const std::vector<std::string> languageTokens = {
     "python",      //  python
     "javascript",  //  javascript
     "typescript",  //  typescript
-    "go",          //  go
+    "golang",      //  go
     "kotlin",      //  kotlin
     "swift",       //  swift
     "php",         //  php
