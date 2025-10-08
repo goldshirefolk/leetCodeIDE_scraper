@@ -1,7 +1,6 @@
-////// TO DO : FIX WEIRD BUG WITH CPP NOT ADDING THE LAST ';' IN THE CODE SNIPPET
-
 #include "config.h"
 #include <curl/curl.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <jsoncpp/json/json.h>
@@ -280,19 +279,29 @@ public:
         description = description.substr(0, code_snippet_end);
     }
 
-    static void exportCodeSnippet_cType(std::string &description, std::ostream &outStream) {
+    static void exportCodeSnippet(std::string &description, std::ostream &outStream, languages chosen_language) {
         prepareCodeSnippet(description);
 
-        outStream << description << "\n\n";
+        // outStream << description << "\n\n";
 
         for (int i = 0; i < description.size(); i++) {
             if (i < description.size() - 1) {
                 if (description[i] == '\\' && description[i + 1] == 'n') {
                     outStream << '\n';
                     i += 2;
-                    if (i > description.size()) {
-                        break;
-                    }
+                }
+
+                if (i > description.size()) {
+                    break;
+                }
+
+                if (chosen_language == LANG_PYTHON || chosen_language == LANG_PYTHON3) {
+                    if (description[i] == '\\')
+                        i++;
+                }
+
+                if (i > description.size()) {
+                    break;
                 }
             }
             outStream << description[i];
@@ -341,17 +350,41 @@ languages getLanguageChar(std::istream &input_stream) {
     return LANG_INVALID;
 }
 
-char getLanguageStructureType(languages chosen_lang) {
-    for (char i = 0; i < languageStructureSimiliarities.size(); i++) {
-        auto v = std::find(languageStructureSimiliarities[i].begin(), languageStructureSimiliarities[i].end(), chosen_lang);
-        if (v != languageStructureSimiliarities[i].end()) {
-            return i;
-        }
+namespace fs = std::filesystem;
+
+fs::path createDir(const std::string &problem_name) {
+    std::error_code ec;
+
+    fs::path base = fs::current_path();
+    fs::path current_new_dir = fs::path(problem_name);
+
+    fs::path dir = base / current_new_dir;
+
+    if (fs::create_directories(dir, ec)) {
+        std::cout << "Created: " << dir << '\n';
+    } else if (ec) {
+        std::cerr << "Error: " << ec.message() << '\n';
+    } else {
+        std::cout << "Already exists: " << dir << '\n';
     }
 
-    std::cout << "\n\nCould not find correct language structure!!\n\n";
-    exit(1);
-    return -1;
+    return dir;
+}
+
+std::ofstream createFileAndDir(std::string &problem_name, languages chosen_language) {
+
+    fs::path file_path = createDir(problem_name);
+
+    std::string code_file_name = problem_name;
+    code_file_name.append(codeFileSufixes[chosen_language]);
+    file_path /= code_file_name;
+    std::ofstream code_file_path(file_path);
+
+    if ((int)chosen_language < codeSnippetPrefixes.size()) {
+        code_file_path << codeSnippetPrefixes[(int)chosen_language];
+    }
+
+    return code_file_path;
 }
 
 int main() {
@@ -392,6 +425,8 @@ int main() {
     std::ofstream rawDesc_out("rawDesc");
     rawDesc_out << problem_detail;
 
+    std::ofstream code_file = createFileAndDir(problem_name, chosen_language);
+
     std::cout << "\n\n\n\n\n";
     std::cout << "=========EXTRACTED CONTENT=========" << "\n\n";
 
@@ -415,13 +450,11 @@ int main() {
     cleansedHtml_out << clean_html_description;
     // std::cout << cleanHTML(content) << "\n\n";
 
-    stringExtractor::exportProblemHeader(std::cout, LANG_CPP);
-    stringExtractor::exportDescription(clean_html_description, std::cout, LANG_CPP);
+    //============================================================================================================================================
 
-    /// Get code
+    stringExtractor::exportProblemHeader(code_file, LANG_CPP);
 
-    // std::cout << problemDetail_copy;
-
+    //============================================================================================================================================
     std::string codeToken = "\"langSlug\":";
     codeToken.append("\"");
     codeToken.append(languageTokens[chosen_language]);
@@ -432,13 +465,19 @@ int main() {
     std::string problem_code = stringExtractor::extractFromJson(problemDetail_copy, codeToken);
     // std::cout << "\n\n"
     //           << problemDetail_copy << "\n\n";
-
-    char language_structure_type = getLanguageStructureType(chosen_language);
-    std::cout << "\n\nTYPE : " << (int)language_structure_type << "\n\n";
-
     std::cout << "\n\n\n";
-    stringExtractor::exportCodeSnippet_cType(problemDetail_copy, std::cout);
+    stringExtractor::exportCodeSnippet(problemDetail_copy, code_file, chosen_language);
     std::cout << "\n\n\n";
+
+    //============================================================================================================================================
+
+    stringExtractor::exportDescription(clean_html_description, code_file, LANG_CPP);
+
+    //============================================================================================================================================
+
+    /// Get code
+
+    // std::cout << problemDetail_copy;
 
     // // Save raw response
     // std::ofstream detailFile("two_sum_detail.json");

@@ -118,8 +118,30 @@ inline const std::vector<std::string> languageTokens = {
     "\n\nINVALID!!\n\n",
 };
 
-inline const std::vector<std::vector<languages>> languageStructureSimiliarities = {
-    {LANG_JAVA, LANG_C, LANG_CPP, LANG_TYPESCRIPT, LANG_CSHARP, LANG_GO, LANG_KOTLIN, LANG_SWIFT, LANG_RUST, LANG_DART, LANG_SCALA},
-    {}};
+inline const std::vector<std::string> codeFileSufixes = {
+    ".cpp",
+    ".c",
+    ".cs",
+    ".java",
+    ".py",
+    ".py",
+    ".js",
+    ".ts",
+    ".go",
+    ".kt",
+    ".swift",
+    ".php",
+    ".dart",
+    ".scala",
+    ".ex",
+    ".erl",
+    ".rkt",
+    ".rs",
+    "",
+};
+
+inline const std::vector<std::string> codeSnippetPrefixes = {
+    "#include<iostream>\n#include<vector>\n#include<algorithm>\n\nusing namespace std;\n\n\n",
+};
 
 }  // namespace LeetcodeToolConfig
