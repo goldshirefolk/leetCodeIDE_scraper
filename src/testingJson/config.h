@@ -140,8 +140,26 @@ inline const std::vector<std::string> codeFileSufixes = {
     "",
 };
 
+inline const std::string codeSnippetPrefixNewlines = "\n\n\n";
+
 inline const std::vector<std::string> codeSnippetPrefixes = {
-    "#include<iostream>\n#include<vector>\n#include<algorithm>\n\nusing namespace std;\n\n\n",
+    "#include<iostream>\n#include<vector>\n#include<algorithm>\n#include<list>\n\nusing namespace std;",
+    "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <math.h>\n#include <stdbool.h>\n#include <stdint.h>",
+    "using System;\nusing System.Collections.Generic;\nusing System.Linq;\nusing System.Text;",
+    "import java.util.*;\nimport java.io.*;",
+    "from typing import List, Optional, Tuple, Dict, Set\nimport sys\nimport math\nimport collections\nimport heapq\nimport bisect\nimport itertools",
+    "import sys\nimport math\nimport collections\nimport heapq\nimport bisect\nimport itertools",
+    "'use strict';",
+    "package main\n\nimport (\n    \"bufio\"\n    \"fmt\"\n    \"os\"n    \"strconv\"\n    \"strings\"\n    \"math\"\n    \"sort\"\n    \"container/heap\"\n}",
+    "import java.util.*\nimport kotlin.math.*",
+    "import Foundation",
+    "<?php\ndeclare(strict_types=1);",
+    "import 'dart:math';\nimport 'dart:collection';\nimport 'dart:io';",
+    "import scala.collection.mutable\nimport scala.collection.immutable\nimport scala.math._",
+    "import Enum\nimport MapSet\nimport Bitwise\nrequire Integer",
+    "use std::cmp::{min, max, Ordering};\nuse std::collections::{HashMap, HashSet, BTreeMap, BTreeSet, VecDeque, BinaryHeap};\nuse std::io::{self, Read};",
+    "",
+
 };
 
 }  // namespace LeetcodeToolConfig

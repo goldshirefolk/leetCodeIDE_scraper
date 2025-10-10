@@ -96,8 +96,8 @@ private:
         int start = string.find(start_token);
 
         if (start == std::string::npos) {
-            std::cout << "\n\nCould not token : (" << start_token << " | " << end_token
-                      << "), for : " << string << "\n\n";
+            // std::cout << "\n\nCould not token : (" << start_token << " | " << end_token
+            //<< "), for : " << string << "\n\n";
             exit(1);
         }
         start += start_token.length();
@@ -307,7 +307,7 @@ public:
             outStream << description[i];
         }
 
-        outStream << "\n\n";
+        outStream << "\n\n\n";
     }
 };
 
@@ -361,11 +361,11 @@ fs::path createDir(const std::string &problem_name) {
     fs::path dir = base / current_new_dir;
 
     if (fs::create_directories(dir, ec)) {
-        std::cout << "Created: " << dir << '\n';
+        // std::cout << "Created: " << dir << '\n';
     } else if (ec) {
         std::cerr << "Error: " << ec.message() << '\n';
     } else {
-        std::cout << "Already exists: " << dir << '\n';
+        // std::cout << "Already exists: " << dir << '\n';
     }
 
     return dir;
@@ -381,15 +381,15 @@ std::ofstream createFileAndDir(std::string &problem_name, languages chosen_langu
     std::ofstream code_file_path(file_path);
 
     if ((int)chosen_language < codeSnippetPrefixes.size()) {
-        code_file_path << codeSnippetPrefixes[(int)chosen_language];
+        code_file_path << codeSnippetPrefixes[(int)chosen_language] << codeSnippetPrefixNewlines;
     }
 
     return code_file_path;
 }
 
 int main() {
-    std::cout << "=== Testing LeetCode GraphQL API ===\n"
-              << std::endl;
+    // std::cout << "=== Testing LeetCode GraphQL API ===\n"
+    //<< std::endl;
 
     std::ifstream link_input("link");
 
@@ -397,58 +397,58 @@ int main() {
     link_input >> link;
 
     std::string problem_name = stringExtractor::nameFromLink(link);
-    std::cout << problem_name << std::endl;
+    // std::cout << problem_name << std::endl;
 
     // // Test 1: Get problem list
-    // std::cout << "1. Fetching problem list..." << std::endl;
+    // //std::cout << "1. Fetching problem list..." << std::endl;
     // std::string problemList = getProblemList(0, 5);  // First 5 problems
-    // std::cout << "Problem list response size: " << problemList.size() << " bytes\n"
+    // //std::cout << "Problem list response size: " << problemList.size() << " bytes\n"
     //           << std::endl;
 
     // // Save raw response
     // std::ofstream listFile("problem_list.json");
     // listFile << problemList;
     // listFile.close();
-    // std::cout << "Problem list saved to problem_list.json\n"
+    // //std::cout << "Problem list saved to problem_list.json\n"
     //           << std::endl;
 
     languages chosen_language = getLanguageChar(link_input);
-    std::cout << "\n\n\nChosen lang : " << languageTokens[chosen_language] << "\n\n\n";
+    // std::cout << "\n\n\nChosen lang : " << languageTokens[chosen_language] << "\n\n\n";
 
-    std::cout << "Fetching problem details..." << std::endl;
+    // std::cout << "Fetching problem details..." << std::endl;
 
     std::string problem_detail = getProblemDetail(problem_name);
     std::string problemDetail_copy = problem_detail;
-    std::cout << "Problem detail response size: " << problem_detail.size() << " bytes\n"
-              << std::endl;
+    // std::cout << "Problem detail response size: " << problem_detail.size() << " bytes\n"
+    //<< std::endl;
 
     std::ofstream rawDesc_out("rawDesc");
     rawDesc_out << problem_detail;
 
     std::ofstream code_file = createFileAndDir(problem_name, chosen_language);
 
-    std::cout << "\n\n\n\n\n";
-    std::cout << "=========EXTRACTED CONTENT=========" << "\n\n";
+    // std::cout << "\n\n\n\n\n";
+    // std::cout << "=========EXTRACTED CONTENT=========" << "\n\n";
 
     problem_id = stringExtractor::extractFromJson(problem_detail, "\"questionId\":");
-    std::cout << "Problem Id : " << problem_id << std::endl;
+    // std::cout << "Problem Id : " << problem_id << std::endl;
 
     problem_title = stringExtractor::extractFromJson(problem_detail, "\"title\":");
-    std::cout << "Problem title : " << problem_title << std::endl;
+    // std::cout << "Problem title : " << problem_title << std::endl;
 
     std::string content = stringExtractor::extractFromJson(problem_detail, "\"content\":");
 
     problem_difficulty = stringExtractor::extractFromJson(problem_detail, "\"difficulty\":");
-    std::cout << "Problem difficulty : " << problem_difficulty << std::endl;
+    // std::cout << "Problem difficulty : " << problem_difficulty << std::endl;
 
-    std::cout << "\n\n";
-    std::cout << "=========PROBLEM DESCRIPTION=========" << "\n";
+    // std::cout << "\n\n";
+    // std::cout << "=========PROBLEM DESCRIPTION=========" << "\n";
 
     std::string clean_html_description = cleanHTML(content);
 
     std::ofstream cleansedHtml_out("cleansedHtmlDesc");
     cleansedHtml_out << clean_html_description;
-    // std::cout << cleanHTML(content) << "\n\n";
+    // //std::cout << cleanHTML(content) << "\n\n";
 
     //============================================================================================================================================
 
@@ -460,14 +460,14 @@ int main() {
     codeToken.append(languageTokens[chosen_language]);
     codeToken.append("\"");
 
-    std::cout << "TOKEN : " << codeToken;
+    // std::cout << "TOKEN : " << codeToken;
 
     std::string problem_code = stringExtractor::extractFromJson(problemDetail_copy, codeToken);
-    // std::cout << "\n\n"
+    // //std::cout << "\n\n"
     //           << problemDetail_copy << "\n\n";
-    std::cout << "\n\n\n";
+    // std::cout << "\n\n\n";
     stringExtractor::exportCodeSnippet(problemDetail_copy, code_file, chosen_language);
-    std::cout << "\n\n\n";
+    // std::cout << "\n\n\n";
 
     //============================================================================================================================================
 
@@ -477,23 +477,23 @@ int main() {
 
     /// Get code
 
-    // std::cout << problemDetail_copy;
+    // //std::cout << problemDetail_copy;
 
     // // Save raw response
     // std::ofstream detailFile("two_sum_detail.json");
     // detailFile << problem_detail;
     // detailFile.close();
-    // std::cout << "Problem detail saved to two_sum_detail.json\n"
+    // //std::cout << "Problem detail saved to two_sum_detail.json\n"
     //           << std::endl;
 
     // // Show preview of responses
-    // std::cout << "=== Problem List Preview ===" << std::endl;
-    // std::cout << problemList.substr(0, 500) << "...\n"
+    // //std::cout << "=== Problem List Preview ===" << std::endl;
+    // //std::cout << problemList.substr(0, 500) << "...\n"
     //           << std::endl;
 
-    // std::cout
+    // //std::cout
     //     << "=== Problem Detail Preview ===" << std::endl;
-    // std::cout << problem_detail << "..." << std::endl;
+    // //std::cout << problem_detail << "..." << std::endl;
 
     return 0;
 }
