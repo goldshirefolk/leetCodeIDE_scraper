@@ -7,6 +7,9 @@
 #define COMMENT_DELIMS_START_INDX 0
 #define COMMENT_DELIMS_END_INDX 1
 
+#define IDE_CONFIG_VAL_VSCODE 0
+#define IDE_CONFIG_VAL_NVIM 1
+
 namespace LeetcodeToolConfig {
 //==GENERAL==========================================================================================================================================
 inline const std::string image_warning = "\n!!! Problem has images, it is best you use the link !!!\n";
@@ -175,16 +178,22 @@ inline const std::vector<std::string> codeSnippetPrefixes = {
     "from typing import List, Optional, Tuple, Dict, Set\nimport sys\nimport math\nimport collections\nimport heapq\nimport bisect\nimport itertools",
     "import sys\nimport math\nimport collections\nimport heapq\nimport bisect\nimport itertools",
     "'use strict';",
-    "package main\n\nimport (\n    \"bufio\"\n    \"fmt\"\n    \"os\"n    \"strconv\"\n    \"strings\"\n    \"math\"\n    \"sort\"\n    \"container/heap\"\n}",
+    "export {};",
+    "package main\n\nimport (\n    \"bufio\"\n    \"fmt\"\n    \"os\"\n    \"strconv\"\n    \"strings\"\n    \"math\"\n    \"sort\"\n    \"container/heap\"\n)",
     "import java.util.*\nimport kotlin.math.*",
     "import Foundation",
     "<?php\ndeclare(strict_types=1);",
     "import 'dart:math';\nimport 'dart:collection';\nimport 'dart:io';",
     "import scala.collection.mutable\nimport scala.collection.immutable\nimport scala.math._",
     "import Enum\nimport MapSet\nimport Bitwise\nrequire Integer",
+    "-module(solution).",
+    "#lang racket",
     "use std::cmp::{min, max, Ordering};\nuse std::collections::{HashMap, HashSet, BTreeMap, BTreeSet, VecDeque, BinaryHeap};\nuse std::io::{self, Read};",
     "",
-
 };
 
+inline const std::vector<std::string> ideLaunchCommands = {
+    "code",  // vscode
+    "nvim"   // nvim
+};
 }  // namespace LeetcodeToolConfig

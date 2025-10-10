@@ -1,4 +1,5 @@
 #include "config.h"
+#include <cstdlib>
 #include <curl/curl.h>
 #include <filesystem>
 #include <fstream>
@@ -9,6 +10,7 @@
 #include <vector>
 
 using namespace LeetcodeToolConfig;
+namespace fs = std::filesystem;
 
 size_t WriteCallback(void *contents, size_t size, size_t nmemb, std::string *response) {
     size_t total_size = size * nmemb;
@@ -350,7 +352,46 @@ languages getLanguageChar(std::istream &input_stream) {
     return LANG_INVALID;
 }
 
-namespace fs = std::filesystem;
+class IDE_Handler {
+    char isActive;
+    char chosen_ide;
+
+private:
+    char extractConfig(std::ifstream &public_config_file) {
+
+        std::string buffer;
+        do {
+            std::getline(public_config_file, buffer);
+
+        } while (!isalpha(buffer[0]));
+
+        int p = 0;
+        while (!isdigit(buffer[p]))
+            p++;
+
+        buffer.erase(0, p);
+
+        char ans = (char)std::stoi(buffer);
+        return ans;
+    }
+
+public:
+    IDE_Handler(std::ifstream &public_config_file) {
+        this->isActive = extractConfig(public_config_file);
+        this->chosen_ide = extractConfig(public_config_file);
+    }
+
+    void launchIDE(fs::path &file_path) {
+        if (!isActive)
+            return;
+
+        std::string command = ideLaunchCommands[chosen_ide];
+        command += " ";
+        command += file_path.string();
+
+        system(command.c_str());
+    }
+};
 
 fs::path createDir(const std::string &problem_name) {
     std::error_code ec;
@@ -371,9 +412,9 @@ fs::path createDir(const std::string &problem_name) {
     return dir;
 }
 
-std::ofstream createFileAndDir(std::string &problem_name, languages chosen_language) {
+std::ofstream createFileAndDir(std::string &problem_name, languages chosen_language, fs::path &file_path) {
 
-    fs::path file_path = createDir(problem_name);
+    file_path = createDir(problem_name);
 
     std::string code_file_name = problem_name;
     code_file_name.append(codeFileSufixes[chosen_language]);
@@ -425,7 +466,8 @@ int main() {
     std::ofstream rawDesc_out("rawDesc");
     rawDesc_out << problem_detail;
 
-    std::ofstream code_file = createFileAndDir(problem_name, chosen_language);
+    fs::path created_file_path;
+    std::ofstream code_file = createFileAndDir(problem_name, chosen_language, created_file_path);
 
     // std::cout << "\n\n\n\n\n";
     // std::cout << "=========EXTRACTED CONTENT=========" << "\n\n";
@@ -474,6 +516,14 @@ int main() {
     stringExtractor::exportDescription(clean_html_description, code_file, (int)chosen_language);
 
     //============================================================================================================================================
+
+    std::ifstream config_file("publicConfig");
+    if (!config_file) {
+        std::cout << "OPEN ERROR";
+        return 0;
+    }
+    IDE_Handler ide_handler(config_file);
+    ide_handler.launchIDE(created_file_path);
 
     /// Get code
 
