@@ -4,6 +4,9 @@
 
 #define LANGUAGE_COUNT 18
 
+#define COMMENT_DELIMS_START_INDX 0
+#define COMMENT_DELIMS_END_INDX 1
+
 namespace LeetcodeToolConfig {
 //==GENERAL==========================================================================================================================================
 inline const std::string image_warning = "\n!!! Problem has images, it is best you use the link !!!\n";
@@ -138,6 +141,28 @@ inline const std::vector<std::string> codeFileSufixes = {
     ".rkt",
     ".rs",
     "",
+};
+
+inline const std::vector<std::vector<std::string>> commentDelims = {
+    {"/*", "*/"},          // cpp
+    {"/*", "*/"},          // c
+    {"/*", "*/"},          // csharp
+    {"/*", "*/"},          // java
+    {"\"\"\"", "\"\"\""},  // python3
+    {"\"\"\"", "\"\"\""},  // python
+    {"/*", "*/"},          // javascript
+    {"/*", "*/"},          // typescript
+    {"/*", "*/"},          // golang
+    {"/*", "*/"},          // kotlin
+    {"/*", "*/"},          // swift
+    {"/*", "*/"},          // php
+    {"/*", "*/"},          // dart
+    {"/*", "*/"},          // scala
+    {"", ""},              // elixir (no block comments)
+    {"", ""},              // erlang (no block comments)
+    {"#|", "|#"},          // racket
+    {"/*", "*/"},          // rust
+    {"", ""}               // INVALID!!
 };
 
 inline const std::string codeSnippetPrefixNewlines = "\n\n\n";

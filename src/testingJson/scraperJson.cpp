@@ -184,7 +184,7 @@ public:
     } descSectionMaxNewLines;
 
     static void exportProblemHeader(std::ostream &outStream, int lang) {
-        outStream << descSectionSymbols_start[lang] << "\n";
+        outStream << commentDelims[lang][COMMENT_DELIMS_START_INDX] << "\n";
 
         std::string start_buffer;
 
@@ -208,7 +208,7 @@ public:
             outStream << image_warning;
         }
 
-        outStream << descSectionSymbols_end[lang] << "\n\n\n";
+        outStream << commentDelims[lang][COMMENT_DELIMS_END_INDX] << "\n\n\n";
     }
 
     static void exportDescription(std::string &description, std::ostream &outStream, int lang) {
@@ -219,7 +219,7 @@ public:
 
         int section = 0;
 
-        outStream << descSectionSymbols_start[lang] << "\n";
+        outStream << commentDelims[lang][COMMENT_DELIMS_START_INDX] << "\n";
 
         while ((end = description.find(newLine_token, start)) != std::string::npos) {
             std::string buffer = description.substr(start, end - start);
@@ -267,7 +267,7 @@ public:
             buffer.clear();
         }
 
-        outStream << descSectionSymbols_end[lang] << '\n';
+        outStream << commentDelims[lang][COMMENT_DELIMS_END_INDX] << "\n\n\n";
     }
 
     static void prepareCodeSnippet(std::string &description) {
@@ -452,7 +452,7 @@ int main() {
 
     //============================================================================================================================================
 
-    stringExtractor::exportProblemHeader(code_file, LANG_CPP);
+    stringExtractor::exportProblemHeader(code_file, (int)chosen_language);
 
     //============================================================================================================================================
     std::string codeToken = "\"langSlug\":";
@@ -471,7 +471,7 @@ int main() {
 
     //============================================================================================================================================
 
-    stringExtractor::exportDescription(clean_html_description, code_file, LANG_CPP);
+    stringExtractor::exportDescription(clean_html_description, code_file, (int)chosen_language);
 
     //============================================================================================================================================
 
