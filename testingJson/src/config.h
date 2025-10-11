@@ -192,8 +192,22 @@ inline const std::vector<std::string> codeSnippetPrefixes = {
     "",
 };
 
+inline const std::string absolutPathFolder = "/leetCodeProblems/";
+inline const std::string createdFileString = "\033[1;33mCreated File : \033[0m\n";
 inline const std::vector<std::string> ideLaunchCommands = {
     "code",  // vscode
     "nvim"   // nvim
+};
+
+inline const std::vector<std::string> ideNameStrings = {
+    "Visual Studio Code",
+    "Neo vim",
+};
+
+inline const std::string invalidAnswerResponseString = "Invalid answer, please enter a valid answer:\n";
+
+inline const std::vector<std::vector<std::string>> absolutePathUserInputResponses = {
+    {"c", "curr", "cur", "current"},
+    {"a", "abs", "absolute"},
 };
 }  // namespace LeetcodeToolConfig

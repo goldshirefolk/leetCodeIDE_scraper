@@ -1,4 +1,5 @@
 #include "config.h"
+#include <chrono>
 #include <cstdlib>
 #include <curl/curl.h>
 #include <filesystem>
@@ -7,6 +8,7 @@
 #include <jsoncpp/json/json.h>
 #include <regex>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace LeetcodeToolConfig;
@@ -385,6 +387,10 @@ public:
         if (!isActive)
             return;
 
+        std::cout << "\033[1;33mLaunching IDE : \033[0m"
+                  << ideNameStrings[chosen_ide] << "\n";
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
         std::string command = ideLaunchCommands[chosen_ide];
         command += " ";
         command += file_path.string();
@@ -393,10 +399,18 @@ public:
     }
 };
 
-fs::path createDir(const std::string &problem_name) {
+fs::path createDir(const std::string &problem_name, const char is_abs_path) {
     std::error_code ec;
 
-    fs::path base = fs::current_path();
+    fs::path base;
+
+    if (!is_abs_path) {
+        base = fs::current_path();
+    } else {
+        const char *home = std::getenv("HOME");
+        base = std::string(home) + absolutPathFolder;
+    }
+
     fs::path current_new_dir = fs::path(problem_name);
 
     fs::path dir = base / current_new_dir;
@@ -412,13 +426,16 @@ fs::path createDir(const std::string &problem_name) {
     return dir;
 }
 
-std::ofstream createFileAndDir(std::string &problem_name, languages chosen_language, fs::path &file_path) {
+std::ofstream createFileAndDir(std::string &problem_name, languages chosen_language, fs::path &file_path, const char is_abs_path) {
 
-    file_path = createDir(problem_name);
+    file_path = createDir(problem_name, is_abs_path);
 
     std::string code_file_name = problem_name;
     code_file_name.append(codeFileSufixes[chosen_language]);
     file_path /= code_file_name;
+
+    std::cout << createdFileString << file_path.string() << "\n\n";
+
     std::ofstream code_file_path(file_path);
 
     if ((int)chosen_language < codeSnippetPrefixes.size()) {
@@ -427,6 +444,77 @@ std::ofstream createFileAndDir(std::string &problem_name, languages chosen_langu
 
     return code_file_path;
 }
+
+class InputHandler {
+private:
+    bool invalidAnswerCalled = false;
+
+    void processInput(std::string &input) {
+        for (int i = 0; input[i]; i++) {
+            input[i] = std::tolower(input[i]);
+        }
+    }
+
+    void moveCursorUp(int n) {
+        std::cout << "\033[" << n << "A";
+    }
+
+    void clearCurrentConsoleLine() {
+        std::cout << "\r\033[2K";
+        std::cout.flush();
+    }
+
+    void invalidAnswerHandler(std::string &input, const std::vector<std::vector<std::string>> &possible_answers) {
+        if (invalidAnswerCalled) {
+            moveCursorUp(possible_answers.size() + 2 /* 2 = the input and the invalid answer line */);
+        }
+
+        std::cout << invalidAnswerResponseString;
+
+        for (char i = 0; i < possible_answers.size(); i++) {
+            std::cout << "[";
+            for (char j = 0; j < possible_answers[i].size(); j++) {
+                std::cout << possible_answers[i][j];
+
+                if (j < possible_answers[i].size() - 1) {
+                    std::cout << "/";
+                }
+            }
+            std::cout << "]\n";
+        }
+
+        if (invalidAnswerCalled) {
+            clearCurrentConsoleLine();
+        }
+
+        std::cin >> input;
+
+        invalidAnswerCalled = true;
+    }
+
+    char processAnswerForAbsoluteDirectory(std::string &input) {
+        processInput(input);
+
+        for (char i = 0; i < absolutePathUserInputResponses.size(); i++) {
+            for (auto s : absolutePathUserInputResponses[i]) {
+                if (input == s) {
+                    return i;
+                }
+            }
+        }
+
+        invalidAnswerHandler(input, absolutePathUserInputResponses);
+        return getAnswerForAbsoluteDirectory(input);
+    }
+
+public:
+    char getAnswerForAbsoluteDirectory(std::string &input) {
+        char r = processAnswerForAbsoluteDirectory(input);
+        invalidAnswerCalled = false;
+
+        return r;
+    }
+};
 
 int main() {
     // std::cout << "=== Testing LeetCode GraphQL API ===\n"
@@ -466,8 +554,23 @@ int main() {
     std::ofstream rawDesc_out("rawDesc");
     rawDesc_out << problem_detail;
 
+    //============================================================================================================================================
+
+    InputHandler input_handler;
+
+    std::cout << "Do you want the problem folder to be created in the current subdirectory or in the default absolute directory?\n";
+    std::cout << "[" << "\033[1;33mC\033[0m"
+              << "\\" << "\033[1;33mA\033[0m" << "]" << "\n";
+
+    std::string response;
+    std::cin >> response;
+
+    char is_abs_directory = input_handler.getAnswerForAbsoluteDirectory(response);
+
+    // std::cout << "IS ABS DIRECTORY : " << (int)is_abs_directory << "\n\n";
+
     fs::path created_file_path;
-    std::ofstream code_file = createFileAndDir(problem_name, chosen_language, created_file_path);
+    std::ofstream code_file = createFileAndDir(problem_name, chosen_language, created_file_path, is_abs_directory);
 
     // std::cout << "\n\n\n\n\n";
     // std::cout << "=========EXTRACTED CONTENT=========" << "\n\n";
@@ -516,10 +619,6 @@ int main() {
     stringExtractor::exportDescription(clean_html_description, code_file, (int)chosen_language);
 
     //============================================================================================================================================
-
-    std::cout << "Do you want the problem folder to be created in the current subdirectory or in the default absolute directory?\n";
-    std::cout << "[" << "\033[1;32mY\033[0m"
-              << "\\" << "\033[1;31mN\033[0m" << "]" << "\n";
 
     std::ifstream config_file("publicConfig");
     if (!config_file) {
