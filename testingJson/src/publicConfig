@@ -1,0 +1,4 @@
+launch_ide = 0
+IDE = 1
+[0 -> Visual Studio Code]
+[1 -> NeoVim]
