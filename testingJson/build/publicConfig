@@ -6,7 +6,7 @@ IDE = 0
 [1 -> NeoVim]
 absolute_path_dir = leetcodeProblems/
 
-chosen_lang = java
+chosen_lang = cpp
 [   
     "cpp",         //  cpp
     "c",           //  c
@@ -28,4 +28,5 @@ chosen_lang = java
     "rust",        //  rust
 ]
 
-(configEnd)
+(configEnd)prev_launched = 1
+{end}
