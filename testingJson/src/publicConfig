@@ -1,5 +1,0 @@
-launch_ide = 1
-IDE = 0
-[0 -> Visual Studio Code]
-[1 -> NeoVim]
-absolute_path_dir = leetcodeProblems/
