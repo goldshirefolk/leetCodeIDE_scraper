@@ -1,0 +1,31 @@
+(configStart)
+
+launch_ide = 1
+IDE = 0
+[0 -> Visual Studio Code]
+[1 -> NeoVim]
+absolute_path_dir = leetcodeProblems/
+
+chosen_lang = java
+[   
+    "cpp",         //  cpp
+    "c",           //  c
+    "csharp",      //  csharp
+    "java",        //  java
+    "python3",     //  python3
+    "python",      //  python
+    "javascript",  //  javascript
+    "typescript",  //  typescript
+    "golang",      //  go
+    "kotlin",      //  kotlin
+    "swift",       //  swift
+    "php",         //  php
+    "dart",        //  dart
+    "scala",       //  scala
+    "elixir",      //  elixir
+    "erlang",      //  erlang
+    "racket",      //  racket
+    "rust",        //  rust
+]
+
+(configEnd)
