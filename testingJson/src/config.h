@@ -16,6 +16,7 @@ namespace LeetcodeToolConfig {
 inline const std::string publicConfigFileName = "publicConfig";
 
 inline const std::string firstLaunchMessage = "Configure the tool from the public config file with your prefferences!\n";
+inline const std::string directoryTypeAskMessage = "\033[1;33mDo you want the problem folder to be created in the current subdirectory or in the default absolute directory?\n\033[0m";
 
 inline const std::string publicConfigActiveIDE_string = "launch_ide";
 inline const std::string publicConfigChosenIDE_string = "IDE";
@@ -24,7 +25,7 @@ inline const std::string publicConfigChosenLang_string = "chosen_lang";
 inline const std::string publicConfigPrevLaunched_string = "prev_launched";
 inline const std::string publicConfigConfigEndTag_string = "(configEnd)";
 
-inline const std::string openningString = "Enter problem link:\n";
+inline const std::string openningString = "\033[1;33mEnter problem link:\n\033[0m";
 inline const std::string chooseLanguageString = "Enter your chosen programming language:\n";
 
 inline const std::string image_warning = "\n!!! Problem has images, it is best you use the link !!!\n";

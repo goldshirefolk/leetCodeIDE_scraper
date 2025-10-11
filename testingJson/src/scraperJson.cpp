@@ -564,6 +564,28 @@ void firstTimeLaunch() {
     config_file_out.close();
 }
 
+void exportCurrentProblemInfo() {
+    problem_id = std::regex_replace(problem_id, std::regex("\""), "");
+    problem_title = std::regex_replace(problem_title, std::regex("\""), "");
+    problem_difficulty = std::regex_replace(problem_difficulty, std::regex("\""), "");
+
+    std::string diff_color_wrapper_start = "\033[1;";
+    std::string diff_color_wrapper_mid = "m";
+    std::string diff_color_wrapper_end = "\033[0m";
+
+    std::string diff_color_wrapper_mid_add;
+    if (problem_difficulty == "Easy") {
+        diff_color_wrapper_mid_add = "32";
+    } else if (problem_difficulty == "Medium") {
+        diff_color_wrapper_mid_add = "33";
+    } else {
+        diff_color_wrapper_mid_add = "31";
+    }
+
+    std::cout << "[" << problem_id << ". " << problem_title << " (" << diff_color_wrapper_start + diff_color_wrapper_mid_add + diff_color_wrapper_mid + problem_difficulty + diff_color_wrapper_end
+              << ")]\n\n";
+}
+
 int main() {
     // std::cout << "=== Testing LeetCode GraphQL API ===\n"
     //<< std::endl;
@@ -601,7 +623,6 @@ int main() {
 
     // std::cout << chooseLanguageString;
     languages chosen_language = getLanguageChar(extractConfig(config_file, publicConfigChosenLang_string));
-    std::cout << "Chosen lang : " << (int)chosen_language;
     // std::cout << "\n\n\nChosen lang : " << languageTokens[chosen_language] << "\n\n\n";
 
     // std::cout << "Fetching problem details..." << std::endl;
@@ -611,16 +632,29 @@ int main() {
     // std::cout << "Problem detail response size: " << problem_detail.size() << " bytes\n"
     //<< std::endl;
 
+    problem_id = stringExtractor::extractFromJson(problem_detail, "\"questionId\":");
+    // std::cout << "Problem Id : " << problem_id << std::endl;
+
+    problem_title = stringExtractor::extractFromJson(problem_detail, "\"title\":");
+    // std::cout << "Problem title : " << problem_title << std::endl;
+
+    std::string content = stringExtractor::extractFromJson(problem_detail, "\"content\":");
+
+    problem_difficulty = stringExtractor::extractFromJson(problem_detail, "\"difficulty\":");
+    // std::cout << "Problem difficulty : " << problem_difficulty << std::endl;
+
     std::ofstream rawDesc_out("rawDesc");
     rawDesc_out << problem_detail;
 
     //============================================================================================================================================
 
+    exportCurrentProblemInfo();
+
     InputHandler input_handler;
 
-    std::cout << "Do you want the problem folder to be created in the current subdirectory or in the default absolute directory?\n";
-    std::cout << "[" << "\033[1;33mC\033[0m"
-              << "\\" << "\033[1;33mA\033[0m" << "]" << "\n";
+    std::cout << directoryTypeAskMessage;
+    std::cout << "[" << "\033[1;32mC\033[0m"
+              << "\\" << "\033[1;32mA\033[0m" << "]" << "\n";
 
     std::string response;
     std::cin >> response;
@@ -634,17 +668,6 @@ int main() {
 
     // std::cout << "\n\n\n\n\n";
     // std::cout << "=========EXTRACTED CONTENT=========" << "\n\n";
-
-    problem_id = stringExtractor::extractFromJson(problem_detail, "\"questionId\":");
-    // std::cout << "Problem Id : " << problem_id << std::endl;
-
-    problem_title = stringExtractor::extractFromJson(problem_detail, "\"title\":");
-    // std::cout << "Problem title : " << problem_title << std::endl;
-
-    std::string content = stringExtractor::extractFromJson(problem_detail, "\"content\":");
-
-    problem_difficulty = stringExtractor::extractFromJson(problem_detail, "\"difficulty\":");
-    // std::cout << "Problem difficulty : " << problem_difficulty << std::endl;
 
     // std::cout << "\n\n";
     // std::cout << "=========PROBLEM DESCRIPTION=========" << "\n";
@@ -665,8 +688,6 @@ int main() {
     codeToken.append(languageTokens[(char)chosen_language]);
     codeToken.append("\"");
 
-    std::cout << "\n\ntoken:" << codeToken << "\n\n";
-
     // std::cout << "TOKEN : " << codeToken;
 
     std::string problem_code = stringExtractor::extractFromJson(problemDetail_copy, codeToken);
@@ -685,6 +706,8 @@ int main() {
     stringExtractor::exportDescription(clean_html_description, code_file, (int)chosen_language);
 
     //============================================================================================================================================
+
+    std::cout << "\033[1;33mChosen Language : \033[0m" << languageTokens[(char)chosen_language] << " (You can edit this in the public config file)\n";
 
     IDE_Handler ide_handler(config_file);
     ide_handler.launchIDE(created_file_path);
