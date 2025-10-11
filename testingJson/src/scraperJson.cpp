@@ -277,8 +277,8 @@ public:
     }
 
     static void prepareCodeSnippet(std::string &description) {
-        int start = description.find("code:", 0);
-        int skipLength = sizeof("codep:p") + 2;
+        int start = description.find("code\":", 0);
+        int skipLength = sizeof("codep:");
         description = description.substr(start + skipLength, description.size() - skipLength);
 
         int code_snippet_end = description.find("\"},{\"lang\"");
@@ -288,6 +288,8 @@ public:
     static void exportCodeSnippet(std::string &description, std::ostream &outStream, languages chosen_language) {
         prepareCodeSnippet(description);
 
+        // std::cout << "\n\ncode_copy:" << description << "\n\n";
+        // exit(1);
         // outStream << description << "\n\n";
 
         for (int i = 0; i < description.size(); i++) {
@@ -599,6 +601,7 @@ int main() {
 
     // std::cout << chooseLanguageString;
     languages chosen_language = getLanguageChar(extractConfig(config_file, publicConfigChosenLang_string));
+    std::cout << "Chosen lang : " << (int)chosen_language;
     // std::cout << "\n\n\nChosen lang : " << languageTokens[chosen_language] << "\n\n\n";
 
     // std::cout << "Fetching problem details..." << std::endl;
@@ -659,12 +662,18 @@ int main() {
     //============================================================================================================================================
     std::string codeToken = "\"langSlug\":";
     codeToken.append("\"");
-    codeToken.append(languageTokens[chosen_language]);
+    codeToken.append(languageTokens[(char)chosen_language]);
     codeToken.append("\"");
+
+    std::cout << "\n\ntoken:" << codeToken << "\n\n";
 
     // std::cout << "TOKEN : " << codeToken;
 
     std::string problem_code = stringExtractor::extractFromJson(problemDetail_copy, codeToken);
+
+    // std::cout << "\n\ncode:" << problem_code << "\n\n";
+    //  std::cout << "\n\ncode_copy:" << problemDetail_copy << "\n\n";
+
     // //std::cout << "\n\n"
     //           << problemDetail_copy << "\n\n";
     // std::cout << "\n\n\n";
