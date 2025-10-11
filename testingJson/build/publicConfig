@@ -28,5 +28,4 @@ chosen_lang = cpp
     "rust",        //  rust
 ]
 
-(configEnd)prev_launched = 1
-{end}
+(configEnd)
