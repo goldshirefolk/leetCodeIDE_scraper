@@ -1,3 +1,5 @@
+/// TODO : ADD CONFIG FILE PATH @ line 357
+
 #include "config.h"
 #include <chrono>
 #include <cstdlib>
@@ -341,17 +343,55 @@ std::string cleanHTML(const std::string &html) {
 
 #define LANG_STRUCTURE_TYPE_C 0
 
-languages getLanguageChar(std::istream &input_stream) {
-    std::string lang;
-    input_stream >> lang;
-
+languages getLanguageChar(const std::string &lang) {
     for (char i = 0; i < LANGUAGE_COUNT; i++) {
         if (lang == languageTokens[i]) {
             return (languages)i;
         }
     }
 
+    std::cout << "INVALID LANGUAGE FOUND IN CONFIG FILE, PLEASE CHECK THE CONFIG FILE @ " << "\nQuitting...\n\n";
+    exit(1);
     return LANG_INVALID;
+}
+
+void handleBufferConfigError(const std::string &buffer, int p, const std::string configString) {
+    if (configString != publicConfigPrevLaunched_string)
+        if (p == buffer.length()) {
+            std::cout << "COULD NOT FIND CONFIG FOR " << configString << "\nQuitting...\n";
+            exit(1);
+        }
+}
+
+std::string extractConfig(std::ifstream &public_config_file, const std::string configString) {
+    // reset file
+    public_config_file.clear();
+    public_config_file.seekg(0, std::ios::beg);
+
+    std::string buffer;
+    do {
+        std::getline(public_config_file, buffer);
+        if (configString == publicConfigPrevLaunched_string && buffer == publicConfigConfigEndTag_string) {
+            return buffer;
+        }
+    } while (buffer.find(configString) == std::string::npos || buffer.find("=") == std::string::npos);
+
+    int p = 0;
+    while (buffer[p] != '=') {
+        p++;
+        handleBufferConfigError(buffer, p, configString);
+    }
+
+    p++;
+
+    while (buffer[p] == ' ') {
+        p++;
+        handleBufferConfigError(buffer, p, configString);
+    }
+
+    buffer.erase(0, p);
+
+    return buffer;
 }
 
 class IDE_Handler {
@@ -359,28 +399,10 @@ class IDE_Handler {
     char chosen_ide;
 
 private:
-    char extractConfig(std::ifstream &public_config_file) {
-
-        std::string buffer;
-        do {
-            std::getline(public_config_file, buffer);
-
-        } while (!isalpha(buffer[0]));
-
-        int p = 0;
-        while (!isdigit(buffer[p]))
-            p++;
-
-        buffer.erase(0, p);
-
-        char ans = (char)std::stoi(buffer);
-        return ans;
-    }
-
 public:
     IDE_Handler(std::ifstream &public_config_file) {
-        this->isActive = extractConfig(public_config_file);
-        this->chosen_ide = extractConfig(public_config_file);
+        this->isActive = (char)std::stoi(extractConfig(public_config_file, publicConfigActiveIDE_string));
+        this->chosen_ide = (char)std::stoi(extractConfig(public_config_file, publicConfigChosenIDE_string));
     }
 
     void launchIDE(fs::path &file_path) {
@@ -516,14 +538,48 @@ public:
     }
 };
 
+void firstTimeLaunch() {
+    std::ifstream config_file(publicConfigFileName);
+    std::ofstream config_file_out(publicConfigFileName, std::ios::app);
+
+    if (extractConfig(config_file, publicConfigPrevLaunched_string) == publicConfigConfigEndTag_string) {
+        std::cout << firstLaunchMessage;
+
+        std::string system_command_string = "cat ";
+        system_command_string += publicConfigFileName;
+        system(system_command_string.c_str());
+
+        std::cout << "\n";
+
+        config_file.close();
+
+        config_file_out << "prev_launched = 1\n{end}";
+    }
+
+    if (config_file.is_open())
+        config_file.close();
+
+    config_file_out.close();
+}
+
 int main() {
     // std::cout << "=== Testing LeetCode GraphQL API ===\n"
     //<< std::endl;
 
+    firstTimeLaunch();
+
+    std::ifstream config_file(publicConfigFileName);
+    if (!config_file) {
+        std::cout << "OPEN ERROR";
+        return 0;
+    }
+
     std::ifstream link_input("link");
 
     std::string link;
-    link_input >> link;
+
+    std::cout << openningString;
+    std::cin >> link;
 
     std::string problem_name = stringExtractor::nameFromLink(link);
     // std::cout << problem_name << std::endl;
@@ -541,7 +597,8 @@ int main() {
     // //std::cout << "Problem list saved to problem_list.json\n"
     //           << std::endl;
 
-    languages chosen_language = getLanguageChar(link_input);
+    // std::cout << chooseLanguageString;
+    languages chosen_language = getLanguageChar(extractConfig(config_file, publicConfigChosenLang_string));
     // std::cout << "\n\n\nChosen lang : " << languageTokens[chosen_language] << "\n\n\n";
 
     // std::cout << "Fetching problem details..." << std::endl;
@@ -620,11 +677,6 @@ int main() {
 
     //============================================================================================================================================
 
-    std::ifstream config_file("publicConfig");
-    if (!config_file) {
-        std::cout << "OPEN ERROR";
-        return 0;
-    }
     IDE_Handler ide_handler(config_file);
     ide_handler.launchIDE(created_file_path);
 

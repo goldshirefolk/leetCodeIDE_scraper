@@ -12,6 +12,21 @@
 
 namespace LeetcodeToolConfig {
 //==GENERAL==========================================================================================================================================
+
+inline const std::string publicConfigFileName = "publicConfig";
+
+inline const std::string firstLaunchMessage = "Configure the tool from the public config file with your prefferences!\n";
+
+inline const std::string publicConfigActiveIDE_string = "launch_ide";
+inline const std::string publicConfigChosenIDE_string = "IDE";
+inline const std::string publicConfigAbsolutePathDir_string = "absolute_path_dir";
+inline const std::string publicConfigChosenLang_string = "chosen_lang";
+inline const std::string publicConfigPrevLaunched_string = "prev_launched";
+inline const std::string publicConfigConfigEndTag_string = "(configEnd)";
+
+inline const std::string openningString = "Enter problem link:\n";
+inline const std::string chooseLanguageString = "Enter your chosen programming language:\n";
+
 inline const std::string image_warning = "\n!!! Problem has images, it is best you use the link !!!\n";
 
 inline const std::string newLine_token = "\\n";
