@@ -517,6 +517,10 @@ int main() {
 
     //============================================================================================================================================
 
+    std::cout << "Do you want the problem folder to be created in the current subdirectory or in the default absolute directory?\n";
+    std::cout << "[" << "\033[1;32mY\033[0m"
+              << "\\" << "\033[1;31mN\033[0m" << "]" << "\n";
+
     std::ifstream config_file("publicConfig");
     if (!config_file) {
         std::cout << "OPEN ERROR";
